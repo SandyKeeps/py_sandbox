@@ -18,3 +18,9 @@ where = ["src"]
 [project.scripts]
 # KEY = "module:function"
 py_sandbox = "py_sandbox.cli:main"
+
+
+[project.urls]
+homepage = "https://github.com/SandyKeeps/py_sandbox"
+repository = "https://github.com/SandyKeeps/py_sandbox"
+documentation = "https://github.com/SandyKeeps/py_sandbox"
