@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py_sandbox"
+version = "0.1.0"
+description = "python sandbox"
+readme = "README.md"
+authors = [
+  { name = "Your Name", email = "you@example.com" }
+]
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+# KEY = "module:function"
+py_sandbox = "py_sandbox.cli:main"
