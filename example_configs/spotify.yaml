@@ -1,0 +1,6 @@
+name: spotify
+whitelist_imports:
+  -  spotify
+whitelist_functions:
+  # as an example we only want our agent to be able to create playlists of songs without podcasts
+   - 
