@@ -1,6 +1,10 @@
 Metadata-Version: 2.4
 Name: py_sandbox
-Version: 0.1.0
+Version: 0.1.1
 Summary: python sandbox
 Author-email: Your Name <you@example.com>
+Project-URL: homepage, https://github.com/SandyKeeps/py_sandbox
+Project-URL: repository, https://github.com/SandyKeeps/py_sandbox
+Project-URL: documentation, https://github.com/SandyKeeps/py_sandbox
+Requires-Python: >=3.11
 Description-Content-Type: text/markdown

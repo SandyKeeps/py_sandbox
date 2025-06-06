@@ -1,9 +1,11 @@
-name: spotify
+name: financial_agent
 whitelist_imports:
-  -  spotify
+  - financial_api
 whitelist_functions:
   # as an example we only want our agent to be able to create playlists of songs without podcasts
-   - create_playlist
-   - add_song_to_playlist
-   - delete_song_from_playlist
-
+   - pay_bills
+   - order_uber
+   - other_money_transaction
+allowed_arguments:
+  - "<$50"
+  

@@ -1,7 +1,9 @@
 pyproject.toml
+src/py_sandbox/CodeAnalyzer.py
 src/py_sandbox/__init__.py
 src/py_sandbox/cli.py
 src/py_sandbox/player.py
+src/py_sandbox/py_sandbox.py
 src/py_sandbox/visitor.py
 src/py_sandbox.egg-info/PKG-INFO
 src/py_sandbox.egg-info/SOURCES.txt
