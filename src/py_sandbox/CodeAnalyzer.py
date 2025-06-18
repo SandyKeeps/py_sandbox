@@ -196,6 +196,7 @@ class CodeAnalyzer(ast.NodeTransformer):
         """Track from...import statements"""
         for alias in node.names:
             if alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
+                alias.asname = alias.name
                 alias.name = "this"
             self.imports.append({
                 "type": "from_import",
