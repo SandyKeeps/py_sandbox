@@ -176,10 +176,14 @@ class CodeAnalyzer(ast.NodeTransformer):
             if alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 # TODO: take out import from tree
                 # replace import with this library
+                print(f"name: {alias.name} as: {alias.asname}")
+                self.config.blacklist.append(alias.asname)
+                self.config.blacklist.extend("this")
                 alias.name = "this"
+                # TODO: we need to 
             # elif alias.name not in self.config.allowed_imports:
             #     # TODO: how strict do you want to be with allowed
-            #     # TODO: take the imports out of the tree
+            #     # TODO: take the imprts out of the tree
 
             #     alias.name = "NOPE"
             else:
@@ -197,6 +201,8 @@ class CodeAnalyzer(ast.NodeTransformer):
         for alias in node.names:
             if alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 alias.asname = alias.name
+                self.config.blacklist.append(alias.asname)
+                self.config.blacklist.extend("this")
                 alias.name = "this"
             self.imports.append({
                 "type": "from_import",
@@ -210,7 +216,7 @@ class CodeAnalyzer(ast.NodeTransformer):
     def visit_Call(self, node):
         """Track function calls"""
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-            print(f"Visit Call: {node.func.value.id} {node.func.attr}")
+            print(f"Visit Call: valueid:{node.func.value.id} attr:{node.func.attr} {node.func._attributes}")
             if node.func.value.id in self.config.blacklist: # and node.func.attr == self.target_func:
                 return ast.copy_location(
                     ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
@@ -235,8 +241,8 @@ class CodeAnalyzer(ast.NodeTransformer):
     
     def visit_Name(self, node):
         """Track variable names"""
-        if node.id in self.config.blacklist:
-            node.id = "this"
+        # if node.id in self.config.blacklist:
+        #     node.id = "this"
             # Using a blacklist import or function
         if isinstance(node.ctx, ast.Store):
             self.variables.add(node.id)
@@ -245,7 +251,7 @@ class CodeAnalyzer(ast.NodeTransformer):
     def visit_Attribute(self, node):
         # Handles things like requests.get, requests.post, etc.
         if isinstance(node.value, ast.Name) and node.value.id in self.config.blacklist:
-            node.value.id = 'this'
+            node.value.id = 'this-attr'
         return self.generic_visit(node)
     
     def visit_For(self, node):

@@ -55,7 +55,7 @@ class CodeRunner:
         output_buffer.close()
         print(f"Result: {result}")
         print(f"Captured Output: {captured_output}")
-        print(f"captured vars: {captured_output}")
+        print(f"captured vars: {captured_vars}")
         return captured_output, captured_vars
 
     def run_interpreter(self):
