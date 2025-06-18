@@ -1,6 +1,6 @@
-from py_sandbox.py_sandbox import py_sandbox
+from py_sandbox.CodeAnalyzer import CodeAnalyzer
 
-sb = py_sandbox()
+ca = CodeAnalyzer()
 
-sb.single_function('print("hello")')
+print(ca.analyze_code("print('Hello World')"))
 

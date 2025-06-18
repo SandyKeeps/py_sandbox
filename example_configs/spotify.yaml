@@ -1,9 +1,8 @@
 name: spotify
-whitelist_imports:
+allowed_imports:
   -  spotify
-whitelist_functions:
+allowed_functions:
   # as an example we only want our agent to be able to create playlists of songs without podcasts
    - create_playlist
    - add_song_to_playlist
    - delete_song_from_playlist
-

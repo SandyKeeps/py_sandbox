@@ -3,14 +3,19 @@ import sys
 from collections import defaultdict, Counter
 from typing import Dict, List, Set, Any, Optional
 import json
+import contextlib
+import io
+from .AnalyzerConfig import AnalyzerConfig
 
-class CodeAnalyzer(ast.NodeVisitor):
+
+class CodeAnalyzer(ast.NodeTransformer):
     """
     A comprehensive Python code analyzer using AST.
     Extracts various metrics and information from Python source code.
     """
     
-    def __init__(self):
+    def __init__(self, config=AnalyzerConfig()):
+        self.config=config
         self.reset()
     
     def reset(self):
@@ -40,117 +45,158 @@ class CodeAnalyzer(ast.NodeVisitor):
             return self.analyze_code(source_code, filepath)
         except Exception as e:
             return {"error": f"Failed to analyze {filepath}: {str(e)}"}
+        
+    def sanitize_code(self, source_code: str):
+        # TODO: takes in source code
+        # runs through analyzer, removes bad parts
+        # returns an executable tree 
+        sanitized_tree = "print('sanitized')"
+        
+        return sanitized_tree
     
     def analyze_code(self, source_code: str, filename: str = "None") -> Dict[str, Any]:
-        """Analyze Python source code and return comprehensive metrics"""
+        """
+        Analyze Python source code and return comprehensive metrics
+        TODO: also take in config for what is allowed 
+        TODO: return sanitized code that has what is not allowed taken out
+        """
         self.reset()
         
-        try:
-            tree = ast.parse(source_code, mode='eval')
-            self.line_count = len(source_code.splitlines())
-            self.visit(tree)
+        # try:
+        tree = ast.parse(source_code, mode='exec')
+        self.line_count = len(source_code.splitlines())
+        self.visit(tree)
+        
+        return self._compile_results(), tree
             
-            return self._compile_results()
+        # except SyntaxError as e:
+        #     print(f"Syntax error: {str(e)}")
+        #     return {
+        #         "error": f"Syntax error in {filename}: {str(e)}",
+        #         "line": e.lineno,
+        #         "offset": e.offset
+        #     }, None
+        # except Exception as e:
+        #     print(f"Analysis failed: {str(e)}")
+        #     return {"error": f"Analysis failed: {str(e)}"}, None
+    
+    # def visit_FunctionDef(self, node):
+    #     """Analyze function definitions"""
+    #     func_info = {
+    #         "name": node.name,
+    #         "line": node.lineno,
+    #         "args": [arg.arg for arg in node.args.args],
+    #         "returns": ast.unparse(node.returns) if node.returns else None,
+    #         "decorators": [ast.unparse(dec) for dec in node.decorator_list],
+    #         "docstring": ast.get_docstring(node),
+    #         "complexity": self._calculate_function_complexity(node),
+    #         "class": self.current_class
+    #     }
+
+    #     # sand boxing logic
+    #     if node.name in self.config.blacklisted_functions:
+    #         # TODO: remove function from tree. 
+    #         # TODO: reassign function within the AST to a default func.
+    #         node.name = "this"
+    #     # elif node.name not in self.config.allowed_functions:
+    #     #     # need to work out logic between blacklist and allowed
+    #     #     node.name = "NOPE"
+    #     else:
+    #         self.functions.append(func_info)
+        
+    #         # Track decorators
+    #         for decorator in node.decorator_list:
+    #             self.decorators.append({
+    #                 "decorator": ast.unparse(decorator),
+    #                 "target": node.name,
+    #                 "line": decorator.lineno
+    #             })
             
-        except SyntaxError as e:
-            return {
-                "error": f"Syntax error in {filename}: {str(e)}",
-                "line": e.lineno,
-                "offset": e.offset
-            }
-        except Exception as e:
-            return {"error": f"Analysis failed: {str(e)}"}
+    #         # Track docstrings
+    #         if func_info["docstring"]:
+    #             self.docstrings.append({
+    #                 "type": "function",
+    #                 "name": node.name,
+    #                 "docstring": func_info["docstring"],
+    #                 "line": node.lineno
+    #             })
+            
+    #         old_function = self.current_function
+    #         self.current_function = node.name
+    #         self.scope_stack.append(f"function:{node.name}")
+        
+    #     # TODO: work out continuing when function is taken out
+
+    #     self.current_function = old_function
+    #     self.scope_stack.pop()
+
+    #     return self.generic_visit(node)
     
-    def visit_FunctionDef(self, node):
-        """Analyze function definitions"""
-        func_info = {
-            "name": node.name,
-            "line": node.lineno,
-            "args": [arg.arg for arg in node.args.args],
-            "returns": ast.unparse(node.returns) if node.returns else None,
-            "decorators": [ast.unparse(dec) for dec in node.decorator_list],
-            "docstring": ast.get_docstring(node),
-            "complexity": self._calculate_function_complexity(node),
-            "class": self.current_class
-        }
-        
-        self.functions.append(func_info)
-        
-        # Track decorators
-        for decorator in node.decorator_list:
-            self.decorators.append({
-                "decorator": ast.unparse(decorator),
-                "target": node.name,
-                "line": decorator.lineno
-            })
-        
-        # Track docstrings
-        if func_info["docstring"]:
-            self.docstrings.append({
-                "type": "function",
-                "name": node.name,
-                "docstring": func_info["docstring"],
-                "line": node.lineno
-            })
-        
-        old_function = self.current_function
-        self.current_function = node.name
-        self.scope_stack.append(f"function:{node.name}")
-        
-        self.generic_visit(node)
-        
-        self.current_function = old_function
-        self.scope_stack.pop()
+    # def visit_AsyncFunctionDef(self, node):
+    #     """Handle async function definitions"""
+    #     self.visit_FunctionDef(node)  # Same analysis as regular functions
     
-    def visit_AsyncFunctionDef(self, node):
-        """Handle async function definitions"""
-        self.visit_FunctionDef(node)  # Same analysis as regular functions
-    
-    def visit_ClassDef(self, node):
-        """Analyze class definitions"""
-        class_info = {
-            "name": node.name,
-            "line": node.lineno,
-            "bases": [ast.unparse(base) for base in node.bases],
-            "decorators": [ast.unparse(dec) for dec in node.decorator_list],
-            "docstring": ast.get_docstring(node),
-            "methods": []
-        }
+    # def visit_ClassDef(self, node):
+    #     """Analyze class definitions"""
+    #     class_info = {
+    #         "name": node.name,
+    #         "line": node.lineno,
+    #         "bases": [ast.unparse(base) for base in node.bases],
+    #         "decorators": [ast.unparse(dec) for dec in node.decorator_list],
+    #         "docstring": ast.get_docstring(node),
+    #         "methods": []
+    #     }
         
-        self.classes.append(class_info)
+    #     self.classes.append(class_info)
         
-        # Track docstrings
-        if class_info["docstring"]:
-            self.docstrings.append({
-                "type": "class",
-                "name": node.name,
-                "docstring": class_info["docstring"],
-                "line": node.lineno
-            })
+    #     # Track docstrings
+    #     if class_info["docstring"]:
+    #         self.docstrings.append({
+    #             "type": "class",
+    #             "name": node.name,
+    #             "docstring": class_info["docstring"],
+    #             "line": node.lineno
+    #         })
         
-        old_class = self.current_class
-        self.current_class = node.name
-        self.scope_stack.append(f"class:{node.name}")
+    #     old_class = self.current_class
+    #     self.current_class = node.name
+    #     self.scope_stack.append(f"class:{node.name}")
         
-        self.generic_visit(node)
+    #     self.generic_visit(node)
         
-        self.current_class = old_class
-        self.scope_stack.pop()
+    #     self.current_class = old_class
+    #     self.scope_stack.pop()
     
     def visit_Import(self, node):
         """Track import statements"""
+        # TODO: when an import is taken out 
+        # find all references OR create a std import to 
+        # replace it with that just doesn't run
         for alias in node.names:
-            self.imports.append({
-                "type": "import",
-                "module": alias.name,
-                "alias": alias.asname,
-                "line": node.lineno
-            })
-        self.generic_visit(node)
+            if alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
+                # TODO: take out import from tree
+                # replace import with this library
+                alias.name = "this"
+            # elif alias.name not in self.config.allowed_imports:
+            #     # TODO: how strict do you want to be with allowed
+            #     # TODO: take the imports out of the tree
+
+            #     alias.name = "NOPE"
+            else:
+                self.imports.append({
+                    "type": "import",
+                    "module": alias.name,
+                    "alias": alias.asname,
+                    "line": node.lineno
+                })
+            
+        return self.generic_visit(node)
     
     def visit_ImportFrom(self, node):
         """Track from...import statements"""
         for alias in node.names:
+            if alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
+                alias.name = "this"
             self.imports.append({
                 "type": "from_import",
                 "module": node.module,
@@ -158,10 +204,19 @@ class CodeAnalyzer(ast.NodeVisitor):
                 "alias": alias.asname,
                 "line": node.lineno
             })
-        self.generic_visit(node)
+        return self.generic_visit(node)
     
     def visit_Call(self, node):
         """Track function calls"""
+        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+            print(f"Visit Call: {node.func.value.id} {node.func.attr}")
+            if node.func.value.id in self.config.blacklist: # and node.func.attr == self.target_func:
+                return ast.copy_location(
+                    ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                             args=node.args, keywords=node.keywords),
+                    node
+                )
+
         try:
             func_name = ast.unparse(node.func)
             self.function_calls.append({
@@ -172,15 +227,25 @@ class CodeAnalyzer(ast.NodeVisitor):
                 "context": self._get_current_context()
             })
         except:
+            # TODO: which types of functions are complex?
             pass  # Skip complex calls that can't be unparsed
         
-        self.generic_visit(node)
+        return self.generic_visit(node)
     
     def visit_Name(self, node):
         """Track variable names"""
+        if node.id in self.config.blacklist:
+            node.id = "this"
+            # Using a blacklist import or function
         if isinstance(node.ctx, ast.Store):
             self.variables.add(node.id)
-        self.generic_visit(node)
+        return self.generic_visit(node)
+    
+    def visit_Attribute(self, node):
+        # Handles things like requests.get, requests.post, etc.
+        if isinstance(node.value, ast.Name) and node.value.id in self.config.blacklist:
+            node.value.id = 'this'
+        return self.generic_visit(node)
     
     def visit_For(self, node):
         """Track for loops"""
@@ -190,7 +255,7 @@ class CodeAnalyzer(ast.NodeVisitor):
             "context": self._get_current_context()
         })
         self.complexity_score += 1
-        self.generic_visit(node)
+        return self.generic_visit(node)
     
     def visit_While(self, node):
         """Track while loops"""
@@ -200,7 +265,7 @@ class CodeAnalyzer(ast.NodeVisitor):
             "context": self._get_current_context()
         })
         self.complexity_score += 1
-        self.generic_visit(node)
+        return self.generic_visit(node)
     
     def visit_If(self, node):
         """Track if statements"""
@@ -211,7 +276,7 @@ class CodeAnalyzer(ast.NodeVisitor):
             "context": self._get_current_context()
         })
         self.complexity_score += 1
-        self.generic_visit(node)
+        return self.generic_visit(node)
     
     def visit_Try(self, node):
         """Track try-except blocks"""
@@ -223,7 +288,7 @@ class CodeAnalyzer(ast.NodeVisitor):
             "context": self._get_current_context()
         })
         self.complexity_score += 1
-        self.generic_visit(node)
+        return self.generic_visit(node)
     
     def visit_ExceptHandler(self, node):
         """Track exception handlers"""
@@ -234,7 +299,7 @@ class CodeAnalyzer(ast.NodeVisitor):
             "line": node.lineno,
             "context": self._get_current_context()
         })
-        self.generic_visit(node)
+        return self.generic_visit(node)
     
     def _calculate_function_complexity(self, func_node):
         """Calculate cyclomatic complexity for a function"""
@@ -294,61 +359,49 @@ class CodeAnalyzer(ast.NodeVisitor):
             "exception_handling_ratio": len(self.exceptions) / self.line_count if self.line_count > 0 else 0
         }
 
-
-# def main():
-#     """Example usage of the CodeAnalyzer"""
-#     if len(sys.argv) != 2:
-#         print("Usage: python analyzer.py <python_file>")
-#         return
+    def pretty_print(self, results):
+        if "error" in results:
+            print(f"Error: {results['error']}")
+            return
     
-#     analyzer = CodeAnalyzer()
-#     results = analyzer.analyze_file(sys.argv[1])
-    
-#     if "error" in results:
-#         print(f"Error: {results['error']}")
-#         return
-    
-#     # Pretty print results
-#     print("=" * 60)
-#     print(f"CODE ANALYSIS REPORT")
-#     print("=" * 60)
-    
-#     # Summary
-#     summary = results["summary"]
-#     print(f"\nSUMMARY:")
-#     print(f"  Lines of code: {summary['total_lines']}")
-#     print(f"  Functions: {summary['functions']}")
-#     print(f"  Classes: {summary['classes']}")
-#     print(f"  Imports: {summary['imports']}")
-#     print(f"  Variables: {summary['variables']}")
-#     print(f"  Function calls: {summary['function_calls']}")
-#     print(f"  Complexity score: {summary['complexity_score']}")
-    
-#     # Metrics
-#     metrics = results["metrics"]
-#     print(f"\nMETRICS:")
-#     print(f"  Documentation ratio: {metrics['documentation_ratio']:.2%}")
-#     print(f"  Average function complexity: {metrics['average_function_complexity']:.2f}")
-#     if metrics['most_complex_function']:
-#         print(f"  Most complex function: {metrics['most_complex_function']['name']} (complexity: {metrics['most_complex_function']['complexity']})")
-    
-#     # Functions
-#     if results["functions"]:
-#         print(f"\nFUNCTIONS:")
-#         for func in results["functions"]:
-#             print(f"  {func['name']} (line {func['line']}, complexity: {func['complexity']})")
-    
-#     # Classes
-#     if results["classes"]:
-#         print(f"\nCLASSES:")
-#         for cls in results["classes"]:
-#             print(f"  {cls['name']} (line {cls['line']})")
-    
-#     # Save detailed results to JSON
-#     output_file = sys.argv[1].replace('.py', '_analysis.json')
-#     with open(output_file, 'w') as f:
-#         json.dump(results, f, indent=2)
-#     print(f"\nDetailed analysis saved to: {output_file}")
-
-# if __name__ == "__main__":
-#     main()
+        # Pretty print results
+        print("=" * 60)
+        print(f"CODE ANALYSIS REPORT")
+        print("=" * 60)
+        
+        # Summary
+        summary = results["summary"]
+        print(f"\nSUMMARY:")
+        print(f"  Lines of code: {summary['total_lines']}")
+        print(f"  Functions: {summary['functions']}")
+        print(f"  Classes: {summary['classes']}")
+        print(f"  Imports: {summary['imports']}")
+        print(f"  Variables: {summary['variables']}")
+        print(f"  Function calls: {summary['function_calls']}")
+        print(f"  Complexity score: {summary['complexity_score']}")
+        
+        # Metrics
+        metrics = results["metrics"]
+        print(f"\nMETRICS:")
+        print(f"  Documentation ratio: {metrics['documentation_ratio']:.2%}")
+        print(f"  Average function complexity: {metrics['average_function_complexity']:.2f}")
+        if metrics['most_complex_function']:
+            print(f"  Most complex function: {metrics['most_complex_function']['name']} (complexity: {metrics['most_complex_function']['complexity']})")
+        
+        # Functions
+        if results["functions"]:
+            print(f"\nFUNCTIONS:")
+            for func in results["functions"]:
+                print(f"  {func['name']} (line {func['line']}, complexity: {func['complexity']})")
+        
+        # Classes
+        if results["classes"]:
+            print(f"\nCLASSES:")
+            for cls in results["classes"]:
+                print(f"  {cls['name']} (line {cls['line']})")
+        
+        # Save detailed results to JSON
+        output_file = sys.argv[1].replace('.py', '_analysis.json')
+        with open(output_file, 'w') as f:
+            json.dump(results, f, indent=2)
+        print(f"\nDetailed analysis saved to: {output_file}")

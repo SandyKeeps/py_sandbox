@@ -1,7 +1,5 @@
 import ast
 import yaml
-from flask import render_template
-
 # TODO: how to keep the AST relevant for relevant code models 
 
 
@@ -89,7 +87,6 @@ class py_sandbox:
                 # TODO: send notification that there was an escape
                 # Here just logs errors, 
                 # the sandbox Handler will handle putting them on the Kafka que 
-                # self.user_answer = render_template("bad_kitty.html")
                 self.user_answer = "Not Allowed"
                 return
             self.handle_function(nv.functions)
@@ -129,7 +126,6 @@ class py_sandbox:
 
     def unknown_func(self, *args, **kwargs):
         print("Calling a function not in whitelist")
-        # self.user_answer = render_template("bad_kitty.html")
         self.user_answer = "Not Allowed"
         # one could impliment a custom Exception for this
         # return "bad kitty"

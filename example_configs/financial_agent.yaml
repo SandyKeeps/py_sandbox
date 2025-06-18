@@ -1,7 +1,7 @@
 name: financial_agent
-whitelist_imports:
+allowed_imports:
   - financial_api
-whitelist_functions:
+allowed_functions:
   # as an example we only want our agent to be able to create playlists of songs without podcasts
    - pay_bills
    - order_uber
