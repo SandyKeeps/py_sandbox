@@ -1,8 +1,12 @@
 name: secure_sandbox
 blacklist_import:
   - os
-allowed_functions:
-  - print
+  - sys
+  - code
+blacklist_functions:
+  - open
+# allowed_functions:
+#   - print
 blacklist_statements:
-  // no try statements allowed
+   # no try statements allowed
   - try

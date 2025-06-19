@@ -173,7 +173,13 @@ class CodeAnalyzer(ast.NodeTransformer):
         # find all references OR create a std import to 
         # replace it with that just doesn't run
         for alias in node.names:
-            if alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
+            if self.config.allowed_imports:
+                # first check if there is a whitelist
+                if alias.name not in self.config.allowed_imports:
+                    self.config.blacklist.append(alias.asname)
+                    self.config.blacklist.extend("this")
+                    alias.name = "this"
+            elif alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 # TODO: take out import from tree
                 # replace import with this library
                 print(f"name: {alias.name} as: {alias.asname}")
@@ -181,11 +187,7 @@ class CodeAnalyzer(ast.NodeTransformer):
                 self.config.blacklist.extend("this")
                 alias.name = "this"
                 # TODO: we need to 
-            # elif alias.name not in self.config.allowed_imports:
-            #     # TODO: how strict do you want to be with allowed
-            #     # TODO: take the imprts out of the tree
 
-            #     alias.name = "NOPE"
             else:
                 self.imports.append({
                     "type": "import",
@@ -199,7 +201,12 @@ class CodeAnalyzer(ast.NodeTransformer):
     def visit_ImportFrom(self, node):
         """Track from...import statements"""
         for alias in node.names:
-            if alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
+            if self.config.allowed_imports:
+                if alias.name not in self.config.allowed_imports:
+                    self.config.blacklist.append(alias.asname)
+                    self.config.blacklist.extend("this")
+                    alias.name = "this"
+            elif alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 alias.asname = alias.name
                 self.config.blacklist.append(alias.asname)
                 self.config.blacklist.extend("this")
@@ -215,12 +222,36 @@ class CodeAnalyzer(ast.NodeTransformer):
     
     def visit_Call(self, node):
         """Track function calls"""
-        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-            print(f"Visit Call: valueid:{node.func.value.id} attr:{node.func.attr} {node.func._attributes}")
-            if node.func.value.id in self.config.blacklist: # and node.func.attr == self.target_func:
+        
+        if isinstance(node.func, ast.Name):
+            print(f"Func name: {node.func.id}")
+            if node.func.id not in self.config.allowed_functions:
+                    # TODO organize this
+                    return ast.copy_location(
+                        ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                                args=node.args, keywords=node.keywords),
+                        node
+                    )
+            elif node.func.id in self.config.blacklist: # and node.func.attr == self.target_func:
                 return ast.copy_location(
                     ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
-                             args=node.args, keywords=node.keywords),
+                                args=node.args, keywords=node.keywords),
+                    node
+                )
+        
+        elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+            print(f"Visit Call: valueid:{node.func.value.id} attr:{node.func.attr} {node.func._attributes}")
+            if self.config.allowed_functions:
+                if node.func.value.id not in self.config.allowed_functions:
+                    return ast.copy_location(
+                        ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                                args=node.args, keywords=node.keywords),
+                        node
+                    )
+            elif node.func.value.id in self.config.blacklist: # and node.func.attr == self.target_func:
+                return ast.copy_location(
+                    ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                                args=node.args, keywords=node.keywords),
                     node
                 )
 
