@@ -5,8 +5,6 @@ blacklist_import:
   - code
 blacklist_functions:
   - open
-# allowed_functions:
-#   - print
 blacklist_statements:
    # no try statements allowed
-  - try
+  - try 

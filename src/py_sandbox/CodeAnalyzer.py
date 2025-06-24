@@ -225,13 +225,14 @@ class CodeAnalyzer(ast.NodeTransformer):
         
         if isinstance(node.func, ast.Name):
             print(f"Func name: {node.func.id}")
-            if node.func.id not in self.config.allowed_functions:
-                    # TODO organize this
-                    return ast.copy_location(
-                        ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
-                                args=node.args, keywords=node.keywords),
-                        node
-                    )
+            if self.config.allowed_functions:
+                if node.func.id not in self.config.allowed_functions:
+                        # TODO organize this
+                        return ast.copy_location(
+                            ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                                    args=node.args, keywords=node.keywords),
+                            node
+                        )
             elif node.func.id in self.config.blacklist: # and node.func.attr == self.target_func:
                 return ast.copy_location(
                     ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
