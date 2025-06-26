@@ -5,7 +5,7 @@ class AnalyzerConfig:
     def __init__(self,
                  config_path=None,
                  allowed_imports=[],
-                 blacklist_imports=["os", "sys"],
+                 blacklist_imports=["os", "sys", "socket"],
                  allowed_functions=[],
                  blacklisted_functions=["open"],
                  allowed_statements=[],
@@ -47,7 +47,7 @@ class AnalyzerConfig:
 
     def _assign_defaults(self):
         self.allowed_imports=[]
-        self.blacklist_imports=["os", "sys"]
+        self.blacklist_imports=["os", "sys", "socket"]
         self.allowed_functions=[]
         self.blacklisted_functions=[]
         self.allowed_statements=[]
