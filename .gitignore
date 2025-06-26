@@ -1,1 +1,53 @@
 build/
+
+# Editors and IDEs
+.vscode/                 # Visual Studio Code configurations
+.idea/                   # JetBrains IDEs (like PyCharm) configurations
+*.sublime-*              # Sublime Text configurations
+
+# Compiled Python files
+__pycache__/             # Python bytecode cache directory
+*.pyc                    # Compiled Python files
+*$py.class               # Java-style Python compiled files (if applicable)
+
+# Virtual Environments (venv)
+# Use the directory name of your virtual environment
+venv/                    # General virtual environment directory
+env/                     # Another common virtual environment name
+.env/                    # Directory for environment-specific settings
+.venv/                   # Often used virtual environment name
+ENV/                     # Alternative virtual environment name
+
+# Package Distribution
+build/                   # Directory created during package building
+dist/                    # Directory containing distribution packages
+*.egg-info/              # Metadata about your package
+*.egg                    # Older package distribution format
+
+# Installer Logs
+pip-log.txt              # Pip installation logs
+pip-delete-this-directory.txt # Pip temporary directory
+
+# Unit Test/Coverage Reports
+.tox/                    # tox test automation configurations
+.coverage                # Coverage reports
+.cache                   # Cache directory for various tools
+htmlcov/                 # HTML coverage reports
+*.cover                  # Coverage files
+.pytest_cache/           # pytest cache
+
+# Specific Frameworks or Tools (Add as needed)
+*.mo                     # Translations (for example, in Django)
+*.pot                    # Portable Object Templates (for translations)
+docs/_build/             # Sphinx documentation build directory
+target/                  # PyBuilder build directory
+.ipynb_checkpoints       # Jupyter Notebook checkpoints
+
+# Operating System Files
+.DS_Store                # macOS specific files
+Thumbs.db                # Windows specific files
+
+# Log Files
+*.log                    # General log files
+
+
