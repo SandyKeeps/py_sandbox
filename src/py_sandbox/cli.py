@@ -1,4 +1,3 @@
-# src/mypkg/cli.py (argparse version)
 import argparse
 import code
 from py_sandbox.CodeAnalyzer import CodeAnalyzer
@@ -9,20 +8,19 @@ from py_sandbox.CodeRunner import CodeRunner
 def multiline_repl():
     console = code.InteractiveConsole()
     buffer = []
-
     while True:
         try:
-            prompt = '... ' if buffer else 'sandbox$ '
+            prompt = '........ ' if buffer else 'sandbox$ '
             line = input(prompt)
             buffer.append(line)
             source = '\n'.join(buffer)
-            
-            # Check if the current input is complete
             if console.push(source):
                 # Incomplete — keep collecting input
+                print("incomplete")
                 continue
             else:
                 # Complete — reset buffer
+                print("completed")
                 buffer.clear()
         except (EOFError, KeyboardInterrupt):
             print("\nExiting REPL.")
@@ -38,14 +36,13 @@ def repl(ac):
             line = input("sandbox$ ")
             compiled_results, tree = CodeAnalyzer(ac).analyze_code(source_code=line)
             captured_output, captured_vars, result = CodeRunner().run_tree(code_tree=tree, recurring_vars=recurring_vars)  
-            # result = eval(line, globals_dict)
             if captured_output:
                 print(f"output: {captured_output}")
             if captured_vars:
                 print(f"vars: {captured_vars}")
             if result is not None:
                 print(f"result: {result}")
-            globals_dict = captured_vars
+            recurring_vars = captured_vars
         except (EOFError, KeyboardInterrupt):
             print("\nExiting REPL.")
             break
