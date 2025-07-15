@@ -5,12 +5,12 @@ Install Using pip
 ```
 pip install .
 ```
-Use the Interpriter (repl):
+Use the Interpriter:
 ```
 $ py_sandbox -i
 sandbox$ 
 ```
-
+Takes in strings
 ```
 $ py_sandbox "print('Hello World')"
 $ Hello World
@@ -22,3 +22,4 @@ Use configuration files that specify what is allowed and what is not allowed.
 
 ## Todo
 - multiline repl
+- take in files from command line
