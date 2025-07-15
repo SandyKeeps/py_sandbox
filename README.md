@@ -1,10 +1,19 @@
 # Py Sandbox
 This library is a framework for running untrusted python. 
 ## Command line usage:
+Install Using pip
 ```
-pip install . 
-py_sandbox -i
-py_sandbox "print('hello wirld')"
+pip install .
+```
+Use the Interpriter (repl):
+```
+$ py_sandbox -i
+sandbox$ 
+```
+
+```
+$ py_sandbox "print('Hello World')"
+$ Hello World
 ```
 
 ## How to controll sandbox settings
