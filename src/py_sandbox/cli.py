@@ -35,6 +35,8 @@ def repl(ac):
         try:
             line = input("sandbox$ ")
             compiled_results, tree = CodeAnalyzer(ac).analyze_code(source_code=line)
+            if compiled_results["alert"]:
+                print(f"Alerts: {compiled_results['alert_types']}")
             captured_output, captured_vars, result = CodeRunner().run_tree(code_tree=tree, recurring_vars=recurring_vars)  
             if captured_output:
                 print(f"output: {captured_output}")
@@ -83,13 +85,18 @@ def main():
         pass
     elif args.code:
         compiled_results, tree= CodeAnalyzer(ac).analyze_code(source_code=args.code)
-        captured_output, captured_vars, result = CodeRunner().run_tree(code_tree=tree)
-        if captured_output:
-            print(f"output: {captured_output}")
-        if captured_vars:
-            print(f"vars: {captured_vars}")
-        if result is not None:
-            print(f"result: {result}") 
+        # TODO: Do this better and in a more generic place:
+        if compiled_results["config_no_exec"] and compiled_results["alert"]:
+            print("Not Executing Code")
+            print(compiled_results["alert_types"])
+        else:
+            captured_output, captured_vars, result = CodeRunner().run_tree(code_tree=tree)
+            if captured_output:
+                print(f"output: {captured_output}")
+            if captured_vars:
+                print(f"vars: {captured_vars}")
+            if result is not None:
+                print(f"result: {result}") 
 
 
 if __name__ == "__main__":

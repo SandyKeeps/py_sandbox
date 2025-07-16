@@ -17,6 +17,12 @@ class CodeAnalyzer(ast.NodeTransformer):
     def __init__(self, config=AnalyzerConfig()):
         self.config=config
         self.reset()
+        # TODO: maybe a better way to hold these values but KISS for now
+        self.bad_functions = []
+        self.bad_imports = []
+        self.bad_statements = []
+        self.alert = False
+        self.alert_types = []
     
     def reset(self):
         """Reset all analysis data"""
@@ -35,6 +41,11 @@ class CodeAnalyzer(ast.NodeTransformer):
         self.current_class = None
         self.current_function = None
         self.scope_stack = []
+
+    def check_complexity_score(self):
+        if self.complexity_score > self.config.allowed_complexity:
+            self.alert = True
+            self.alert_types.append("Complexity")
     
     def analyze_file(self, filepath: str) -> Dict[str, Any]:
         """Analyze a Python file and return comprehensive metrics"""
@@ -45,14 +56,6 @@ class CodeAnalyzer(ast.NodeTransformer):
             return self.analyze_code(source_code, filepath)
         except Exception as e:
             return {"error": f"Failed to analyze {filepath}: {str(e)}"}
-        
-    def sanitize_code(self, source_code: str):
-        # TODO: takes in source code
-        # runs through analyzer, removes bad parts
-        # returns an executable tree 
-        sanitized_tree = "print('sanitized')"
-        
-        return sanitized_tree
     
     def analyze_code(self, source_code: str, filename: str = "None") -> Dict[str, Any]:
         """
@@ -176,17 +179,25 @@ class CodeAnalyzer(ast.NodeTransformer):
             if self.config.allowed_imports:
                 # first check if there is a whitelist
                 if alias.name not in self.config.allowed_imports:
-                    self.config.blacklist.append(alias.asname)
+                    self.config.blacklist.append(alias.asname) # WHY IS THIS - asname not name
+                    self.bad_imports.append(alias.name) 
                     self.config.blacklist.extend("this")
                     alias.name = "this"
+                    self.alert = True
+                    self.alert_types.append("Imports")
+                    
             elif alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 # TODO: take out import from tree
                 # replace import with this library
                 print(f"name: {alias.name} as: {alias.asname}")
                 self.config.blacklist.append(alias.asname)
+                self.bad_imports.append(alias.name) 
                 self.config.blacklist.extend("this")
                 alias.name = "this"
-                # TODO: we need to 
+                
+                self.alert = True
+                self.alert_types.append("Imports")
+
 
             else:
                 self.imports.append({
@@ -204,13 +215,22 @@ class CodeAnalyzer(ast.NodeTransformer):
             if self.config.allowed_imports:
                 if alias.name not in self.config.allowed_imports:
                     self.config.blacklist.append(alias.asname)
+                    self.bad_imports.append(alias.name) 
                     self.config.blacklist.extend("this")
                     alias.name = "this"
+
+                    self.alert = True
+                    self.alert_types.append("Imports")
             elif alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 alias.asname = alias.name
                 self.config.blacklist.append(alias.asname)
+                self.bad_imports.append(alias.name) 
                 self.config.blacklist.extend("this")
                 alias.name = "this"
+
+                self.alert = True
+                self.alert_types.append("Imports")
+            
             self.imports.append({
                 "type": "from_import",
                 "module": node.module,
@@ -228,14 +248,18 @@ class CodeAnalyzer(ast.NodeTransformer):
             if self.config.allowed_functions:
                 if node.func.id not in self.config.allowed_functions:
                         # TODO organize this
+                        self.alert = True
+                        self.alert_types.append("Function")
                         return ast.copy_location(
-                            ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                            ast.Call(func=ast.Name(id="alertFunc", ctx=ast.Load()),
                                     args=node.args, keywords=node.keywords),
                             node
                         )
             elif node.func.id in self.config.blacklist: # and node.func.attr == self.target_func:
+                self.alert = True
+                self.alert_types.append("Function")
                 return ast.copy_location(
-                    ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                    ast.Call(func=ast.Name(id="alertFunc", ctx=ast.Load()),
                                 args=node.args, keywords=node.keywords),
                     node
                 )
@@ -244,14 +268,18 @@ class CodeAnalyzer(ast.NodeTransformer):
             print(f"Visit Call: valueid:{node.func.value.id} attr:{node.func.attr} {node.func._attributes}")
             if self.config.allowed_functions:
                 if node.func.value.id not in self.config.allowed_functions:
+                    self.alert = True
+                    self.alert_types.append("Function")
                     return ast.copy_location(
-                        ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                        ast.Call(func=ast.Name(id="alertFunc", ctx=ast.Load()),
                                 args=node.args, keywords=node.keywords),
                         node
                     )
             elif node.func.value.id in self.config.blacklist: # and node.func.attr == self.target_func:
+                self.alert = True
+                self.alert_types.append("Function")
                 return ast.copy_location(
-                    ast.Call(func=ast.Name(id="nothingFunc", ctx=ast.Load()),
+                    ast.Call(func=ast.Name(id="alertFunc", ctx=ast.Load()),
                                 args=node.args, keywords=node.keywords),
                     node
                 )
@@ -267,6 +295,8 @@ class CodeAnalyzer(ast.NodeTransformer):
             })
         except:
             # TODO: which types of functions are complex?
+            self.alert = True
+            self.alert_types.append("Complex Function")
             pass  # Skip complex calls that can't be unparsed
         
         return self.generic_visit(node)
@@ -283,6 +313,8 @@ class CodeAnalyzer(ast.NodeTransformer):
     def visit_Attribute(self, node):
         # Handles things like requests.get, requests.post, etc.
         if isinstance(node.value, ast.Name) and node.value.id in self.config.blacklist:
+            self.alert = True
+            self.alert_types.append("Function From Bad Import")
             node.value.id = 'this-attr'
         return self.generic_visit(node)
     
@@ -381,7 +413,10 @@ class CodeAnalyzer(ast.NodeTransformer):
             "loops": self.loops,
             "conditionals": self.conditionals,
             "exceptions": self.exceptions,
-            "metrics": self._calculate_metrics()
+            "metrics": self._calculate_metrics(),
+            "alert": self.alert,
+            "alert_types": self.alert_types,
+            "config_no_exec": self.config.no_exec
         }
     
     def _calculate_metrics(self):

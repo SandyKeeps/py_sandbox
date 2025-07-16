@@ -8,3 +8,4 @@ blacklist_functions:
 blacklist_statements:
    # no try statements allowed
   - try 
+no_exec: false # do you want the sandbox to not to continue execution if it found an escape?

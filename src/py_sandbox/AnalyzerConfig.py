@@ -10,7 +10,8 @@ class AnalyzerConfig:
                  blacklisted_functions=["open"],
                  allowed_statements=[],
                  blacklist_statements=[],
-                 allowed_complexity=4
+                 allowed_complexity=4,
+                 no_exec=False
                  ):
         self.config_path=config_path
         self.allowed_imports=allowed_imports
@@ -20,6 +21,7 @@ class AnalyzerConfig:
         self.allowed_statements=allowed_statements
         self.blacklist_statements=blacklist_statements
         self.allowed_complexity=allowed_complexity
+        self.no_exec=no_exec
         
         if self.config_path:
             self._load_from_yaml(self.config_path)
@@ -53,5 +55,6 @@ class AnalyzerConfig:
         self.allowed_statements=[]
         self.blacklist_statements=[]
         self.allowed_complexity=4
+        self.no_exec=False
 
 

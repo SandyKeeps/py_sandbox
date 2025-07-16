@@ -6,9 +6,11 @@ from .ResourceLimiter import ResourceLimiter
 
 # TODO: sanitize this class as much as possible
 
-def create_nothingFunc():
+def create_alertFunc():
+    # When this is called something went wrong: an escaped happened
+    # TODO this function could have more logic around alerting
     return ast.FunctionDef(
-        name="nothingFunc",
+        name="alertFunc",
         args=ast.arguments(
             posonlyargs=[],
             args=[],
@@ -21,10 +23,10 @@ def create_nothingFunc():
         body=[
             ast.Expr(value=ast.Call(
                 func=ast.Name(id='print', ctx=ast.Load()),
-                args=[ast.Constant(value='NothingFuncCalled')],
+                args=[ast.Constant(value='AlertFuncCalled')],
                 keywords=[]
             )),
-            ast.Return(value=ast.Constant(value='mocked result'))
+            ast.Return(value=ast.Constant(value='ALERT'))
         ],
         decorator_list=[]
     )
@@ -47,7 +49,7 @@ class CodeRunner:
     def run_tree(self, code_tree, recurring_vars={}):
         output_buffer = io.StringIO()
         # captured_vars = {}
-        code_tree.body.insert(0, create_nothingFunc())
+        code_tree.body.insert(0, create_alertFunc())
         ast.fix_missing_locations(code_tree)
         # print(ast.dump(code_tree))
         # print(f"GLOBALS: {globals_dict}")

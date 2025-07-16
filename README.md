@@ -21,7 +21,7 @@ This approach allows Py Sandbox to detect and neutralize threats before the code
 - **Resource Limitation**: Limits the amount of memory and CPU time that the code can use, preventing denial-of-service attacks.
 - **Access Control**: Restrict access to the file system and network, ensuring that the code cannot read or modify sensitive data.
 - **Process Isolation**: Each code execution runs in a separate process, isolating it from other processes and the host system.
-- **Monitoring and Logging**: The sandbox monitors the code execution and logs any suspicious activities for further analysis. Set up connection to your monitoring services via yaml.
+- **Monitoring and Logging**: The sandbox monitors the code execution and logs any suspicious activities for further analysis. TODO: Set up connection to your monitoring services via yaml. Currently there is minimal alerting and logging. 
 
 ## Command Line Usage
 ### Installation
@@ -36,6 +36,7 @@ pip install .
 $ py_sandbox -i
 sandbox$ 
 ```
+To Exit you must ctl-C, the exit function will not work unless you put it in allowed functions.
 ### Running Python Code
 
 The interpreter can take in strings directly:
@@ -51,8 +52,5 @@ Use configuration files that specify what is allowed and what is not allowed.
 ## To-Do
 - multiline repl
 - take in files from command line
-- resource limitation
-- access control
-- process isolation
 - monitor and logging
 - deploy to pip 

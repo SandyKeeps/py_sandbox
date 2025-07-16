@@ -1,3 +1,5 @@
 name: locktight
 allowed_functions:
   - print
+allowed_imports:
+  - this
