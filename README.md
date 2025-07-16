@@ -40,7 +40,7 @@ sandbox$
 
 The interpreter can take in strings directly:
 ```bash
-$ py_sandbox "print('Hello World')"
+$ py_sandbox --code "print('Hello World')"
 $ Hello World
 ```
 
