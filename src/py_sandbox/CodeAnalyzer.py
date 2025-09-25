@@ -9,10 +9,6 @@ from .AnalyzerConfig import AnalyzerConfig
 
 
 class CodeAnalyzer(ast.NodeTransformer):
-    """
-    A comprehensive Python code analyzer using AST.
-    Extracts various metrics and information from Python source code.
-    """
     
     def __init__(self, config=AnalyzerConfig()):
         self.config=config
@@ -71,17 +67,6 @@ class CodeAnalyzer(ast.NodeTransformer):
         self.visit(tree)
         
         return self._compile_results(), tree
-            
-        # except SyntaxError as e:
-        #     print(f"Syntax error: {str(e)}")
-        #     return {
-        #         "error": f"Syntax error in {filename}: {str(e)}",
-        #         "line": e.lineno,
-        #         "offset": e.offset
-        #     }, None
-        # except Exception as e:
-        #     print(f"Analysis failed: {str(e)}")
-        #     return {"error": f"Analysis failed: {str(e)}"}, None
     
     # def visit_FunctionDef(self, node):
     #     """Analyze function definitions"""
@@ -244,7 +229,7 @@ class CodeAnalyzer(ast.NodeTransformer):
         """Track function calls"""
         
         if isinstance(node.func, ast.Name):
-            print(f"Func name: {node.func.id}")
+            # print(f"Func name: {node.func.id}")
             if self.config.allowed_functions:
                 if node.func.id not in self.config.allowed_functions:
                         # TODO organize this

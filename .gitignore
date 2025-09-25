@@ -51,4 +51,5 @@ Thumbs.db                # Windows specific files
 *.log                    # General log files
 
 src/py_sandbox.egg-info/
+dist/*
 
