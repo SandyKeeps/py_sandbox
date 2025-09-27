@@ -38,6 +38,13 @@ class CodeAnalyzer(ast.NodeTransformer):
         self.current_function = None
         self.scope_stack = []
 
+    def _this_import(self, template_node):
+        # Create `import this` carrying over source location.
+        # TODO: maybe this replace of imports can be configurable
+
+        new = ast.Import(names=[ast.alias(name="this", asname=None)])
+        return ast.copy_location(new, template_node)
+
     def check_complexity_score(self):
         if self.complexity_score > self.config.allowed_complexity:
             self.alert = True
@@ -164,12 +171,18 @@ class CodeAnalyzer(ast.NodeTransformer):
             if self.config.allowed_imports:
                 # first check if there is a whitelist
                 if alias.name not in self.config.allowed_imports:
-                    self.config.blacklist.append(alias.asname) # WHY IS THIS - asname not name
+                    self.config.blacklist.append(alias.asname)
+                    self.config.blacklist.append(alias.name)
                     self.bad_imports.append(alias.name) 
-                    self.config.blacklist.extend("this")
+                    self.bad_imports.append(alias.asname)
+
                     alias.name = "this"
+                    if alias.asname:
+                        alias.asname = "this"
                     self.alert = True
                     self.alert_types.append("Imports")
+                    return self._this_import(node)
+
                     
             elif alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 # TODO: take out import from tree
@@ -182,6 +195,7 @@ class CodeAnalyzer(ast.NodeTransformer):
                 
                 self.alert = True
                 self.alert_types.append("Imports")
+                self._this_import(node)
 
 
             else:
@@ -200,12 +214,16 @@ class CodeAnalyzer(ast.NodeTransformer):
             if self.config.allowed_imports:
                 if alias.name not in self.config.allowed_imports:
                     self.config.blacklist.append(alias.asname)
+                    self.config.blacklist.append(alias.name)
+                    self.bad_imports.append(alias.name)
                     self.bad_imports.append(alias.name) 
-                    self.config.blacklist.extend("this")
                     alias.name = "this"
+                    node.module = "this"
 
                     self.alert = True
                     self.alert_types.append("Imports")
+                    return self._this_import(node)
+
             elif alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 alias.asname = alias.name
                 self.config.blacklist.append(alias.asname)
@@ -215,6 +233,7 @@ class CodeAnalyzer(ast.NodeTransformer):
 
                 self.alert = True
                 self.alert_types.append("Imports")
+                return self._this_import(node)
             
             self.imports.append({
                 "type": "from_import",
