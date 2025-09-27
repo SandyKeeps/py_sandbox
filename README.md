@@ -53,4 +53,5 @@ Use configuration files that specify what is allowed and what is not allowed.
 - multiline repl
 - take in files from command line
 - monitor and logging
+    - add plug and play with otel, elk, kibana and other types of loggers
 - deploy to pip 
