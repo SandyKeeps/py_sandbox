@@ -171,10 +171,12 @@ class CodeAnalyzer(ast.NodeTransformer):
             if self.config.allowed_imports:
                 # first check if there is a whitelist
                 if alias.name not in self.config.allowed_imports:
-                    self.config.blacklist.append(alias.asname)
                     self.config.blacklist.append(alias.name)
-                    self.bad_imports.append(alias.name) 
-                    self.bad_imports.append(alias.asname)
+                    self.bad_imports.append(alias.name)
+                    
+                    if alias.asname:
+                        self.bad_imports.append(alias.asname)
+                        self.config.blacklist.append(alias.asname)
 
                     alias.name = "this"
                     if alias.asname:
@@ -187,10 +189,11 @@ class CodeAnalyzer(ast.NodeTransformer):
             elif alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 # TODO: take out import from tree
                 # replace import with this library
-                print(f"name: {alias.name} as: {alias.asname}")
-                self.config.blacklist.append(alias.asname)
-                self.bad_imports.append(alias.name) 
-                self.config.blacklist.extend("this")
+                self.config.blacklist.append(alias.name)
+                self.bad_imports.append(alias.name)
+                if alias.asname:
+                    self.config.blacklist.append(alias.asname)
+                    self.bad_imports.append(alias.asname)
                 alias.name = "this"
                 
                 self.alert = True
@@ -213,10 +216,11 @@ class CodeAnalyzer(ast.NodeTransformer):
         for alias in node.names:
             if self.config.allowed_imports:
                 if alias.name not in self.config.allowed_imports:
-                    self.config.blacklist.append(alias.asname)
                     self.config.blacklist.append(alias.name)
                     self.bad_imports.append(alias.name)
-                    self.bad_imports.append(alias.name) 
+                    if alias.asname:
+                        self.config.blacklist.append(alias.asname)
+                        self.bad_imports.append(alias.asname) 
                     alias.name = "this"
                     node.module = "this"
 
@@ -226,9 +230,11 @@ class CodeAnalyzer(ast.NodeTransformer):
 
             elif alias.name in self.config.blacklist_imports or alias.asname in self.config.blacklist_imports:
                 alias.asname = alias.name
-                self.config.blacklist.append(alias.asname)
+                self.config.blacklist.append(alias.name)
                 self.bad_imports.append(alias.name) 
-                self.config.blacklist.extend("this")
+                if alias.asname:
+                        self.config.blacklist.append(alias.asname)
+                        self.bad_imports.append(alias.asname) 
                 alias.name = "this"
 
                 self.alert = True
