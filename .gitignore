@@ -53,3 +53,4 @@ Thumbs.db                # Windows specific files
 src/py_sandbox.egg-info/
 dist/*
 
+.DS_Store
